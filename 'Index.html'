@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CatClub</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#111;color:#fff;overflow-x:hidden}
+button{border:0;border-radius:12px;padding:12px 18px;background:#e53935;color:#fff;font-weight:bold;cursor:pointer}
+button:hover{filter:brightness(1.15)}
+.hidden{display:none!important}
+
+/* LOADING */
+#loading{
+ position:fixed;inset:0;background:#111;z-index:9999;
+ display:flex;flex-direction:column;align-items:center;justify-content:center
+}
+.loadingCat{font-size:80px;animation:bounce .8s infinite alternate}
+.loadingTitle{font-size:32px;font-weight:900;margin-top:15px}
+.loadingBar{width:240px;height:10px;background:#333;border-radius:20px;margin-top:25px;overflow:hidden}
+.loadingFill{height:100%;width:0;background:#e53935;animation:load 5s linear forwards}
+@keyframes load{to{width:100%}}
+@keyframes bounce{to{transform:translateY(-12px)}}
+
+/* LOGIN */
+#login{
+ position:fixed;inset:0;background:linear-gradient(135deg,#111,#250606);
+ display:flex;align-items:center;justify-content:center;z-index:500
+}
+.loginBox{
+ width:min(420px,92%);background:#1b1b1b;border:1px solid #333;
+ border-radius:24px;padding:30px;text-align:center;box-shadow:0 20px 60px #000
+}
+.loginBox h1{font-size:38px;margin-bottom:10px}
+.loginBox input,.settingsBox input{
+ width:100%;padding:14px;border-radius:12px;border:1px solid #444;
+ background:#111;color:white;margin:8px 0
+}
+
+/* APP */
+#app{display:none;min-height:100vh}
+header{
+ position:fixed;top:0;left:0;right:0;height:64px;background:#181818;
+ display:flex;align-items:center;padding:0 18px;z-index:100;border-bottom:1px solid #292929
+}
+.logo{font-size:25px;font-weight:900;color:#ff3d3d}
+.points{margin-left:auto;background:#252525;padding:9px 14px;border-radius:12px}
+.sidebar{
+ position:fixed;left:0;top:64px;bottom:0;width:210px;background:#171717;
+ padding:18px 12px;z-index:90
+}
+.navBtn{width:100%;background:transparent;text-align:left;margin:3px 0;color:#ddd}
+.navBtn:hover{background:#292929}
+main{margin-left:210px;padding:90px 24px 30px}
+.page{display:none}
+.page.active{display:block}
+.card{
+ background:#1b1b1b;border:1px solid #303030;border-radius:20px;padding:20px;margin-bottom:20px
+}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
+.item{
+ background:#242424;border-radius:16px;padding:15px;text-align:center
+}
+.item .emoji{font-size:60px;margin:10px}
+.small{color:#aaa;font-size:13px}
+
+/* 3D CAT */
+.catStage{
+ width:280px;height:300px;margin:20px auto;perspective:700px;
+ display:flex;align-items:center;justify-content:center
+}
+.cat3d{
+ width:130px;height:160px;position:relative;transform-style:preserve-3d;
+ transform:rotateY(-15deg)
+}
+.catHead{
+ position:absolute;width:115px;height:100px;left:8px;top:5px;
+ background:#f3f3f3;border-radius:48% 48% 42% 42%;
+ box-shadow:inset -10px -10px 0 #ccc
+}
+.ear{
+ position:absolute;width:42px;height:45px;background:#eee;
+ transform:rotate(45deg);top:-15px;border-radius:8px 30px 8px 30px
+}
+.ear.left{left:0}.ear.right{right:0;transform:rotate(45deg)}
+.eye{
+ position:absolute;width:13px;height:18px;background:#111;border-radius:50%;top:43px
+}
+.leftEye{left:31px}.rightEye{right:31px}
+.nose{
+ position:absolute;left:51px;top:64px;width:12px;height:9px;
+ background:#ff8aa0;border-radius:50%
+}
+.body{
+ position:absolute;left:24px;top:92px;width:82px;height:90px;
+ background:#ddd;border-radius:35px
+}
+.tail{
+ position:absolute;right:-45px;top:115px;width:70px;height:18px;
+ border:9px solid #ddd;border-left:0;border-radius:0 30px 30px 0;
+ transform:rotate(-20deg)
+}
+.skillPanel{
+ display:flex;gap:10px;flex-wrap:wrap;justify-content:center
+}
+.skill{
+ background:#292929;border:1px solid #444;border-radius:14px;padding:12px
+}
+
+/* GAME */
+.gameWrap{
+ background:#080808;border-radius:20px;padding:10px;overflow:hidden
+}
+.vikingCanvas,.raceCanvas{
+ width:100%;height:600px;display:block;background:#111;
+ border-radius:15px;touch-action:none;user-select:none;cursor:grab
+}
+.controls{
+ position:relative;height:0;z-index:20
+}
+.joy{
+ position:absolute;left:25px;bottom:95px;width:145px;height:145px;
+ border-radius:50%;background:#ffffff20;border:3px solid #ffffff55;
+ touch-action:none
+}
+.joyKnob{
+ position:absolute;left:42px;top:42px;width:58px;height:58px;
+ border-radius:50%;background:#ffffff88
+}
+.gameButtons{
+ position:absolute;right:25px;bottom:85px;display:flex;gap:12px;align-items:end
+}
+.gameButtons button{width:75px;height:75px;border-radius:50%;font-size:13px}
+.attack{background:#d32f2f}
+.jump{background:#1976d2}
+.boost{background:#f57c00}
+
+/* SHOP */
+.shopItem{
+ background:#202020;border-radius:16px;padding:16px;text-align:center
+}
+.sword{
+ margin:12px auto;width:20px;height:100px;position:relative;
+ transform:rotate(35deg)
+}
+.swordBlade{
+ position:absolute;width:14px;height:75px;background:linear-gradient(90deg,#777,#fff,#777);
+ left:3px;border-radius:4px 4px 2px 2px
+}
+.swordEdge{
+ position:absolute;width:3px;height:70px;background:#fff;left:11px;opacity:.8
+}
+.swordGuard{
+ position:absolute;top:72px;left:-10px;width:40px;height:8px;background:#c99b3d;border-radius:8px
+}
+.swordGrip{
+ position:absolute;top:80px;left:5px;width:10px;height:28px;background:#6d3d24
+}
+.swordPommel{
+ position:absolute;top:105px;left:2px;width:16px;height:16px;background:#d4af37;border-radius:50%
+}
+
+/* SETTINGS */
+.settingsRow{
+ display:flex;justify-content:space-between;align-items:center;
+ padding:16px 0;border-bottom:1px solid #333
+}
+.toggle{padding:8px 14px;border-radius:20px;background:#168b3a}
+
+/* CHAT */
+.chatNotice{
+ padding:15px;border-radius:15px;background:#292929;margin-bottom:15px
+}
+.chatBox{min-height:180px;background:#111;border-radius:15px;padding:15px}
+.chatInput{display:flex;gap:8px;margin-top:10px}
+.chatInput input{flex:1;padding:13px;background:#222;border:1px solid #444;color:#fff;border-radius:12px}
+
+/* RACING */
+.raceInfo{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.raceBadge{background:#252525;padding:10px 14px;border-radius:12px}
+
+@media(max-width:800px){
+ .sidebar{width:70px}
+ .navBtn{font-size:0;text-align:center}
+ .navBtn:first-letter{font-size:20px}
+ main{margin-left:70px;padding-left:12px;padding-right:12px}
+ .vikingCanvas,.raceCanvas{height:500px}
+}
+</style>
+</head>
+
+<body>
+
+<div id="loading">
+ <div class="loadingCat">🐱</div>
+ <div class="loadingTitle">CatClub</div>
+ <div class="small">Loading your world...</div>
+ <div class="loadingBar"><div class="loadingFill"></div></div>
+</div>
+
+<div id="login">
+ <div class="loginBox">
+  <h1>🐱 CatClub</h1>
+  <p class="small">Enter your username to play.</p>
+  <input id="username" placeholder="Username">
+  <button onclick="login()">Enter CatClub</button>
+ </div>
+</div>
+
+<div id="app">
+
+<header>
+ <div class="logo">🐱 CatClub</div>
+ <div class="points">⭐ <span id="points">0</span> Cat Points</div>
+</header>
+
+<aside class="sidebar">
+ <button class="navBtn" onclick="showPage('home')">🏠 Home</button>
+ <button class="navBtn" onclick="showPage('games')">🎮 Games</button>
+ <button class="navBtn" onclick="showPage('sword')">⚔️ Sword</button>
+ <button class="navBtn" onclick="showPage('racing')">🏎️ Racing</button>
+ <button class="navBtn" onclick="showPage('market')">🛒 Marketplace</button>
+ <button class="navBtn" onclick="showPage('friends')">👥 Friends</button>
+ <button class="navBtn" onclick="showPage('chat')">💬 Chat</button>
+ <button class="navBtn" onclick="showPage('me')">🐱 Me</button>
+ <button class="navBtn" onclick="showPage('settings')">⚙️ Settings</button>
+</aside>
+
+<main>
+
+<section id="home" class="page active">
+ <div class="card">
+  <h1>Welcome to CatClub 🐱</h1>
+  <p class="small">Play games, collect Cat Points and customize your cat.</p>
+ </div>
+ <div class="grid">
+  <div class="card" onclick="showPage('sword')">
+   <h2>⚔️ Cat Sword Arena</h2>
+   <p class="small">Battle bots in the giant arena.</p>
+  </div>
+  <div class="card" onclick="showPage('racing')">
+   <h2>🏎️ Cat Racing</h2>
+   <p class="small">Race your 3D car around the track.</p>
+  </div>
+ </div>
+</section>
+
+<section id="games" class="page">
+ <h1>Games</h1><br>
+ <div class="grid">
+  <div class="card"><h2>⚔️ Sword Arena</h2><button onclick="showPage('sword')">Play</button></div>
+  <div class="card"><h2>🏎️ Racing</h2><button onclick="showPage('racing')">Play</button></div>
+ </div>
+</section>
+
+<section id="sword" class="page">
+ <h1>⚔️ Cat Sword Arena</h1>
+ <p class="small">Move with the joystick. Camera stays still while using the joystick.</p><br>
+
+ <div class="gameWrap">
+  <canvas id="swordCanvas" class="vikingCanvas"></canvas>
+
+  <div class="controls">
+   <div id="joy" class="joy">
+    <div id="joyKnob" class="joyKnob"></div>
+   </div>
+
+   <div class="gameButtons">
+    <button class="jump" onclick="jumpPlayer()">JUMP</button>
+    <button class="attack" onclick="attackPlayer()">⚔️</button>
+   </div>
+  </div>
+ </div>
+
+ <br>
+
+ <div class="grid">
+  <div class="card">
+   <h2>🐱 Cat Skills</h2>
+   <div class="skillPanel">
+    <div class="skill">🐾 <b>Claw Dash</b><br><span class="small">Fast movement</span></div>
+    <div class="skill">🛡️ <b>Purr Shield</b><br><span class="small">Temporary defense</span></div>
+    <div class="skill">⚡ <b>Cat Boost</b><br><span class="small">Power attack</span></div>
+   </div>
+  </div>
+
+  <div class="card">
+   <h2>🪧 Test Boards</h2>
+   <p>Board 1: Movement</p>
+   <p>Board 2: Attack</p>
+   <p>Board 3: Jump</p>
+  </div>
+
+  <div class="card">
+   <h2>⭐ Rewards</h2>
+   <p>Defeat a bot → <b>+5 Cat Points</b></p>
+  </div>
+ </div>
+</section>
+
+<section id="racing" class="page">
+ <h1>🏎️ CatClub Racing</h1>
+ <div class="raceInfo">
+  <div class="raceBadge">Lap: <span id="lap">1</span>/3</div>
+  <div class="raceBadge">Speed: <span id="speed">0</span></div>
+  <div class="raceBadge">Time: <span id="raceTime">0.0</span>s</div>
+ </div>
+
+ <div class="gameWrap">
+  <canvas id="raceCanvas" class="raceCanvas"></canvas>
+  <div class="controls">
+   <div id="raceJoy" class="joy">
+    <div id="raceKnob" class="joyKnob"></div>
+   </div>
+   <div class="gameButtons">
+    <button class="boost" onclick="boostCar()">BOOST</button>
+    <button onclick="brakeCar()">BRAKE</button>
+   </div>
+  </div>
+ </div>
+ <p class="small">PC: WASD / Arrow Keys to drive. Shift = boost.</p>
+</section>
+
+<section id="market" class="page">
+ <h1>🛒 Sword Shop</h1><br>
+ <div class="grid" id="shop"></div>
+</section>
+
+<section id="friends" class="page">
+ <h1>👥 Friends</h1>
+ <div class="card">
+  <p>No friends yet.</p><br>
+  <button onclick="alert('Friend request sent!')">Send Friend Request</button>
+ </div>
+</section>
+
+<section id="chat" class="page">
+ <h1>💬 CatClub Chat</h1>
+ <div id="chatAge" class="card">
+  <h2>Chat Safety</h2>
+  <p class="small">
+   Choose your age range. CatClub uses this to apply safer chat features.
+  </p><br>
+  <button onclick="setAge('11-15')">11–15</button>
+  <button onclick="setAge('16-17')">16–17</button>
+  <button onclick="setAge('18+')">18+</button>
+ </div>
+
+ <div id="chatArea" class="hidden">
+  <div class="chatNotice">
+   <b>💬 Chat enabled</b>
+   <p class="small">Keep conversations respectful and never share private information.</p>
+  </div>
+  <div id="messages" class="chatBox"></div>
+  <div class="chatInput">
+   <input id="chatText" placeholder="Type a message...">
+   <button onclick="sendMessage()">Send</button>
+  </div>
+ </div>
+</section>
+
+<section id="me" class="page">
+ <h1>🐱 My Cat</h1>
+ <div class="card">
+  <div class="catStage">
+   <div class="cat3d">
+    <div class="catHead">
+     <div class="ear left"></div>
+     <div class="ear right"></div>
+     <div class="eye leftEye"></div>
+     <div class="eye rightEye"></div>
+     <div class="nose"></div>
+    </div>
+    <div class="body"></div>
+    <div class="tail"></div>
+   </div>
+  </div>
+  <h2 style="text-align:center" id="myName">Cat</h2>
+ </div>
+</section>
+
+<section id="settings" class="page">
+ <h1>⚙️ Settings</h1>
+ <div class="card settingsBox">
+
+  <div class="settingsRow">
+   <span>🖥️ PC / Computer Controls</span>
+   <button id="pcToggle" class="toggle" onclick="togglePC()">ON</button>
+  </div>
+
+  <div class="settingsRow">
+   <span>🔊 Sound</span>
+   <button onclick="alert('Sound setting changed')">ON</button>
+  </div>
+
+  <div class="settingsRow">
+   <span>🎮 Touch Controls</span>
+   <button onclick="alert('Touch controls enabled')">ON</button>
+  </div>
+
+  <br>
+  <h3>PC Controls</h3>
+  <p class="small">WASD / Arrow Keys — Move</p>
+  <p class="small">Space — Jump</p>
+  <p class="small">F — Attack</p>
+  <p class="small">Shift — Racing Boost</p>
+
+  <br>
+  <button onclick="logout()">🚪 Log Out</button>
+ </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* BASIC ACCOUNT */
+let currentUser=localStorage.getItem("catclubCurrentUser")||"";
+let points=Number(localStorage.getItem("catPoints")||0);
+let pcOn=localStorage.getItem("pcControls")!=="off";
+
+function updatePoints(){
+ document.getElementById("points").textContent=points;
+ localStorage.setItem("catPoints",points);
+}
+
+function login(){
+ const name=document.getElementById("username").value.trim();
+ if(!name)return alert("Enter a username.");
+ currentUser=name;
+ localStorage.setItem("catclubCurrentUser",name);
+ document.getElementById("myName").textContent=name;
+ document.getElementById("login").style.display="none";
+ document.getElementById("app").style.display="block";
+ updatePoints();
+}
+
+function logout(){
+ localStorage.removeItem("catclubCurrentUser");
+ currentUser="";
+ document.getElementById("app").style.display="none";
+ document.getElementById("login").style.display="flex";
+ document.getElementById("username").value="";
+}
+
+function showPage(id){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ if(id==="sword")initSword();
+ if(id==="racing")initRace();
+}
+
+function togglePC(){
+ pcOn=!pcOn;
+ localStorage.setItem("pcControls",pcOn?"on":"off");
+ document.getElementById("pcToggle").textContent=pcOn?"ON":"OFF";
+}
+
+/* DAILY POINTS */
+const dayKey="catclubDaily";
+const today=new Date().toDateString();
+if(localStorage.getItem(dayKey)!==today){
+ points+=5;
+ localStorage.setItem(dayKey,today);
+ updatePoints();
+}
+
+/* SHOP */
+const swords=[
+ ["Wood Sword",10,"🪵"],
+ ["Steel Sword",25,"⚔️"],
+ ["Crystal Sword",50,"💎"],
+ ["Royal Sword",75,"👑"],
+ ["Dragon Sword",100,"🐉"]
+];
+
+function renderShop(){
+ const shop=document.getElementById("shop");
+ shop.innerHTML="";
+ swords.forEach(s=>{
+  shop.innerHTML+=`
+   <div class="shopItem">
+    <div style="font-size:45px">${s[2]}</div>
+    <h3>${s[0]}</h3>
+    <p class="small">${s[1]} Cat Points</p>
+    <button onclick="buySword(${s[1]},'${s[0]}')">Buy</button>
+   </div>`;
+ });
+}
+function buySword(cost,name){
+ if(points<cost)return alert("Not enough Cat Points.");
+ points-=cost;
+ updatePoints();
+ alert("You bought "+name+"!");
+}
+renderShop();
+
+/* CHAT */
+function setAge(age){
+ localStorage.setItem("chatAge",age);
+ document.getElementById("chatAge").classList.add("hidden");
+ document.getElementById("chatArea").classList.remove("hidden");
+}
+function sendMessage(){
+ const input=document.getElementById("chatText");
+ const text=input.value.trim();
+ if(!text)return;
+ const div=document.createElement("p");
+ div.innerHTML="<b>"+escapeHTML(currentUser)+":</b> "+escapeHTML(text);
+ document.getElementById("messages").appendChild(div);
+ input.value="";
+}
+function escapeHTML(s){
+ return s.replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",
+  '"':"&quot;","'":"&#039;"
+ }[c]));
+}
+
+/* SWORD GAME */
+let swordStarted=false;
+let swordCanvas,sctx;
+let player={x:400,y:380,vx:0,vy:0,onGround:true,health:100};
+let joystick={x:0,y:0,active:false};
+let bots=[
+ {x:300,y:280,hp:100,alive:true},
+ {x:500,y:250,hp:100,alive:true},
+ {x:650,y:350,hp:100,alive:true}
+];
+let attackCooldown=0;
+
+function initSword(){
+ if(swordStarted)return;
+ swordStarted=true;
+ swordCanvas=document.getElementById("swordCanvas");
+ sctx=swordCanvas.getContext("2d");
+ resizeSword();
+ window.addEventListener("resize",resizeSword);
+ setupJoystick("joy","joyKnob",v=>{
+  /* IMPORTANT: joystick changes movement only.
+     It NEVER changes camera rotation. */
+  joystick.x=v.x;
+  joystick.y=v.y;
+ });
+ requestAnimationFrame(swordLoop);
+}
+
+function resizeSword(){
+ swordCanvas.width=swordCanvas.clientWidth*devicePixelRatio;
+ swordCanvas.height=swordCanvas.clientHeight*devicePixelRatio;
+ sctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+
+function swordLoop(){
+ const w=swordCanvas.clientWidth,h=swordCanvas.clientHeight;
+
+ player.vx=joystick.x*4;
+ player.x+=player.vx;
+ player.x=Math.max(60,Math.min(w-60,player.x));
+
+ if(!player.onGround){
+  player.vy+=0.55;
+  player.y+=player.vy;
+  if(player.y>=380){player.y=380;player.vy=0;player.onGround=true}
+ }
+
+ if(attackCooldown>0)attackCooldown--;
+
+ bots.forEach((b,i)=>{
+  if(!b.alive)return;
+
+  const dx=player.x-b.x,dy=player.y-b.y;
+  const dist=Math.hypot(dx,dy);
+
+  /* Simple AI: bots chase the nearest target. */
+  if(dist<260){
+   b.x+=Math.sign(dx)*1.1;
+   b.y+=Math.sign(dy)*.3;
+
+   if(dist<55 && attackCooldown===0){
+    player.health-=2;
+   }
+  }
+
+  if(b.hp<=0){
+   b.alive=false;
+   points+=5;
+   updatePoints();
+   setTimeout(()=>{
+    b.hp=100;b.alive=true;
+    b.x=100+Math.random()*(w-200);
+    b.y=180+Math.random()*180;
+   },1500);
+  }
+ });
+
+ drawSwordWorld(w,h);
+ requestAnimationFrame(swordLoop);
+}
+
+function drawSwordWorld(w,h){
+ sctx.clearRect(0,0,w,h);
+
+ /* sky */
+ const sky=sctx.createLinearGradient(0,0,0,h);
+ sky.addColorStop(0,"#17243b");
+ sky.addColorStop(1,"#080b12");
+ sctx.fillStyle=sky;
+ sctx.fillRect(0,0,w,h);
+
+ /* BIG ROUND ARENA */
+ sctx.fillStyle="#20262d";
+ sctx.beginPath();
+ sctx.ellipse(w/2,350,w*.43,180,0,0,Math.PI*2);
+ sctx.fill();
+
+ sctx.strokeStyle="#777";
+ sctx.lineWidth=8;
+ sctx.stroke();
+
+ sctx.strokeStyle="#3d454d";
+ sctx.lineWidth=3;
+ sctx.beginPath();
+ sctx.ellipse(w/2,350,w*.32,130,0,0,Math.PI*2);
+ sctx.stroke();
+
+ /* test boards */
+ for(let i=0;i<3;i++){
+  const x=90+i*(w-180)/2;
+  sctx.fillStyle="#73452a";
+  sctx.fillRect(x-25,120,50,65);
+  sctx.fillStyle="#d8b07a";
+  sctx.fillRect(x-20,125,40,55);
+  sctx.fillStyle="#111";
+  sctx.font="bold 12px Arial";
+  sctx.textAlign="center";
+  sctx.fillText("TEST "+(i+1),x,155);
+ }
+
+ /* cat */
+ drawCat(sctx,90,285);
+
+ /* player */
+ drawCharacter(sctx,player.x,player.y,"#e53935",player.health);
+
+ /* bots */
+ bots.forEach(b=>{
+  if(b.alive)drawCharacter(sctx,b.x,b.y,"#6b8cff",b.hp);
+ });
+
+ /* HUD */
+ sctx.textAlign="left";
+ sctx.fillStyle="#fff";
+ sctx.font="bold 16px Arial";
+ sctx.fillText("❤️ "+Math.max(0,Math.round(player.health)),20,30);
+ sctx.fillText("⭐ "+points,20,55);
+ sctx.fillText("Defeat bots for +5 points",20,h-25);
+}
+
+function drawCharacter(c,x,y,color,hp){
+ c.fillStyle="#111";
+ c.beginPath();c.ellipse(x,y+35,28,8,0,0,Math.PI*2);c.fill();
+
+ c.fillStyle=color;
+ c.beginPath();c.arc(x,y,22,0,Math.PI*2);c.fill();
+
+ /* ears */
+ c.beginPath();
+ c.moveTo(x-20,y-12);c.lineTo(x-10,y-35);c.lineTo(x-2,y-13);c.fill();
+ c.beginPath();
+ c.moveTo(x+2,y-13);c.lineTo(x+12,y-35);c.lineTo(x+21,y-12);c.fill();
+
+ c.fillStyle="#fff";
+ c.beginPath();c.arc(x-8,y,4,0,Math.PI*2);c.arc(x+8,y,4,0,Math.PI*2);c.fill();
+
+ c.fillStyle="#111";
+ c.beginPath();c.arc(x-8,y,2,0,Math.PI*2);c.arc(x+8,y,2,0,Math.PI*2);c.fill();
+
+ /* sword */
+ c.save();
+ c.translate(x+27,y+8);
+ c.rotate(-.6);
+ c.fillStyle="#ddd";c.fillRect(0,-35,7,42);
+ c.fillStyle="#d4af37";c.fillRect(-7,6,22,5);
+ c.fillStyle="#704020";c.fillRect(1,11,6,20);
+ c.restore();
+
+ /* health */
+ c.fillStyle="#333";c.fillRect(x-25,y-48,50,6);
+ c.fillStyle="#36d66b";c.fillRect(x-25,y-48,50*Math.max(0,hp)/100,6);
+}
+
+function drawCat(c,x,y){
+ c.save();
+ c.fillStyle="#f3f3f3";
+ c.beginPath();c.arc(x,y,28,0,Math.PI*2);c.fill();
+
+ c.beginPath();
+ c.moveTo(x-25,y-18);c.lineTo(x-12,y-48);c.lineTo(x-3,y-20);c.fill();
+ c.beginPath();
+ c.moveTo(x+3,y-20);c.lineTo(x+15,y-48);c.lineTo(x+27,y-18);c.fill();
+
+ c.fillStyle="#111"
