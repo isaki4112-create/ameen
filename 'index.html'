@@ -10,7 +10,7 @@ body{background:#111;color:#fff;overflow-x:hidden}
 button{border:0;border-radius:12px;padding:12px 18px;background:#e53935;color:#fff;font-weight:bold;cursor:pointer}
 button:hover{filter:brightness(1.15)}
 .hidden{display:none!important}
-
+ 
 /* LOADING */
 #loading{
  position:fixed;inset:0;background:#111;z-index:9999;
